@@ -16,11 +16,6 @@ public class DefaultZookeeperResolver extends AbstractZookeeperResolver
 
     private final ObjectMapper objectMapper;
 
-    public DefaultZookeeperResolver(CuratorFramework client, String serviceZookeeperPath)
-    {
-        super(client, serviceZookeeperPath);
-        this.objectMapper = new ObjectMapper();
-    }
 
     public DefaultZookeeperResolver(CuratorFramework client, String serviceZookeeperPath, ObjectMapper objectMapper)
     {
@@ -29,7 +24,7 @@ public class DefaultZookeeperResolver extends AbstractZookeeperResolver
     }
 
     @Override
-    protected List<ImmutableRemoteAddressGroup> parseChildData(byte[] childData) throws MorphException
+    List<ImmutableRemoteAddressGroup> parseChildData(byte[] childData) throws MorphException
     {
         CollectionLikeType collectionLikeType = objectMapper.getTypeFactory()
                 .constructCollectionLikeType(List.class, RemoteAddressGroup.class);
@@ -44,4 +39,5 @@ public class DefaultZookeeperResolver extends AbstractZookeeperResolver
             throw new MorphException(e);
         }
     }
+
 }

@@ -41,24 +41,32 @@ public abstract class AbstractZookeeperResolver implements NameResolver, TreeCac
     {
         treeCache = new TreeCache(client, serviceZookeeperPath);
         treeCache.getListenable().addListener(this);
+        try
+        {
+            treeCache.start();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 
-    protected abstract List<ImmutableRemoteAddressGroup> parseChildData(byte[] childData) throws MorphException;
+    abstract List<ImmutableRemoteAddressGroup> parseChildData(byte[] childData) throws MorphException;
 
     @Override
-    public String getScheme()
+    public final String getScheme()
     {
         return "zookeeper";
     }
 
     @Override
-    public int priority()
+    public final int priority()
     {
         return 1;
     }
 
     @Override
-    public void start(String authority, Listener listener)
+    public final void start(String authority, Listener listener)
     {
         if (authorityMap.containsKey(authority))
             throw new RuntimeException("should be never happen");
@@ -96,7 +104,7 @@ public abstract class AbstractZookeeperResolver implements NameResolver, TreeCac
     }
 
     @Override
-    public void childEvent(CuratorFramework curatorFramework, TreeCacheEvent event) throws Exception
+    public final void childEvent(CuratorFramework curatorFramework, TreeCacheEvent event) throws Exception
     {
         if (event == null || event.getType() == null)
         {
@@ -107,7 +115,11 @@ public abstract class AbstractZookeeperResolver implements NameResolver, TreeCac
         switch (event.getType())
         {
             case INITIALIZED:
+                cacheReadyLatch.countDown();
+                System.out.println("initialize start");
                 updatePathInfo();
+                System.out.println("initialized");
+                System.out.println(this.addressGroup);
                 break;
 
             case NODE_ADDED:

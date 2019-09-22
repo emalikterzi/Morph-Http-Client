@@ -7,7 +7,6 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 public class CuratorFrameworkClients
 {
 
-
     public static CuratorFramework createSimple(String connectionString)
     {
         ExponentialBackoffRetry retryPolicy = new ExponentialBackoffRetry(1000, 3);
