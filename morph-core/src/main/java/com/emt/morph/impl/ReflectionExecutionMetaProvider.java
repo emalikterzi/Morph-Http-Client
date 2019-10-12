@@ -1,12 +1,14 @@
 package com.emt.morph.impl;
 
 import com.emt.morph.Constants;
+import com.emt.morph.LoadBalancer;
 import com.emt.morph.MethodExecutionMetaProvider;
+import com.emt.morph.http.ClientHttpMethod;
+import com.emt.morph.http.HttpClientProvider;
 import com.emt.morph.meta.ExecutionMeta;
 import com.emt.morph.meta.ImmutableExecutionMeta;
 import com.emt.morph.meta.ImmutableParameterMeta;
 import com.emt.morph.utils.PrimitiveUtils;
-import com.emt.morph.http.ClientHttpMethod;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -48,7 +50,19 @@ public class ReflectionExecutionMetaProvider implements MethodExecutionMetaProvi
       ClientHttpMethod clientHttpMethod = executionMeta.getClientHttpMethod() == null ? executionMeta.getParent().getClientHttpMethod() :
               executionMeta.getClientHttpMethod();
 
-      return new ImmutableExecutionMeta(path, clientHttpMethod, executionMeta.getMethodParameterMeta(), consumes, produces);
+      Class<? extends LoadBalancer> loadBalancer = executionMeta.getLoadBalancer() == null ? executionMeta
+              .getParent().getLoadBalancer() : executionMeta.getLoadBalancer();
+      Class<? extends HttpClientProvider> httpClientProvider = executionMeta.getHttpClientProvider() == null ?
+              executionMeta.getParent().getHttpClientProvider() : executionMeta.getHttpClientProvider();
+
+      if (loadBalancer == null)
+         loadBalancer = SelectFirstLoadBalancer.class;
+
+      if (httpClientProvider == null)
+         httpClientProvider = DefaultHttpClientProvider.class;
+
+      return new ImmutableExecutionMeta(path, clientHttpMethod, executionMeta.getMethodParameterMeta(),
+              consumes, produces, loadBalancer, httpClientProvider);
    }
 
 
@@ -78,20 +92,20 @@ public class ReflectionExecutionMetaProvider implements MethodExecutionMetaProvi
          Class paramType = paramTypes[i];
 
          boolean primitiveStatus = PrimitiveUtils.isPrimitiveOrWrapper(paramType);
-         //if it is false , it is canidate for requestbody
+
+         /**
+          * all non primitive objects will be treated as request body
+          */
 
          if (primitiveStatus) {
             tryToFindQueryAndPathParam(paramAnnotations, i, paramType, methodParameterMetas);
-
          } else {
-            if (bodyFound) {
-               throw new RuntimeException("multiple body found wtf");
+            if (!bodyFound) {
+               methodParameterMetas.add(new ImmutableParameterMeta(ImmutableParameterMeta.MetaType.BODY, i, paramType));
+               bodyFound = true;
+            } else {
+               //todo multiple body found , should this be warning ???
             }
-
-            bodyFound = true;
-
-            methodParameterMetas.add(new ImmutableParameterMeta(ImmutableParameterMeta.MetaType.BODY, i, paramType));
-
          }
 
       }

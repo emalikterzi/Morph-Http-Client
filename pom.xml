@@ -12,7 +12,8 @@
 
     <modules>
         <module>morph-core</module>
-        <module>morph-zookeeper</module>
+        <module>morph-example-consul</module>
+        <module>morph-example-zookeeper</module>
         <module>sample-resource</module>
     </modules>
 

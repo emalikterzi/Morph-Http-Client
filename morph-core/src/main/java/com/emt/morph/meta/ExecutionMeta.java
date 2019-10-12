@@ -1,6 +1,8 @@
 package com.emt.morph.meta;
 
+import com.emt.morph.LoadBalancer;
 import com.emt.morph.http.ClientHttpMethod;
+import com.emt.morph.http.HttpClientProvider;
 
 import java.util.List;
 import java.util.Objects;
@@ -13,6 +15,8 @@ public class ExecutionMeta {
    private List<ImmutableParameterMeta> methodParameterMeta;
    private String consumes;
    private String produces;
+   private Class<? extends LoadBalancer> loadBalancer;
+   private Class<? extends HttpClientProvider> httpClientProvider;
 
    public String getPath() {
       if (Objects.isNull(path))
@@ -46,6 +50,22 @@ public class ExecutionMeta {
 
    public void setMethodParameterMeta(List<ImmutableParameterMeta> methodParameterMeta) {
       this.methodParameterMeta = methodParameterMeta;
+   }
+
+   public Class<? extends LoadBalancer> getLoadBalancer() {
+      return loadBalancer;
+   }
+
+   public void setLoadBalancer(Class<? extends LoadBalancer> loadBalancer) {
+      this.loadBalancer = loadBalancer;
+   }
+
+   public Class<? extends HttpClientProvider> getHttpClientProvider() {
+      return httpClientProvider;
+   }
+
+   public void setHttpClientProvider(Class<? extends HttpClientProvider> httpClientProvider) {
+      this.httpClientProvider = httpClientProvider;
    }
 
    public String getConsumes() {

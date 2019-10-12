@@ -1,7 +1,7 @@
 package com.emt.morph.proxy;
 
-import com.emt.morph.proxy.invocations.InvocationSessionImpl;
 import com.emt.morph.http.ClientHttpMethod;
+import com.emt.morph.proxy.invocations.InvocationSessionImpl;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
@@ -30,6 +30,9 @@ public class ExecutionHandler implements InvocationHandler {
          return new InvocationSessionImpl(invocationList.iterator(), method, args)
                  .invoke(proxy, method, args);
 
+      /**
+       * important this method important for debugging , debugging panel calling toString method
+       */
       if (method.getName().equals("toString") &&
               method.getDeclaringClass().getName().equals("java.lang.Object")) {
          return handlerClass.getName() + "#com.sun.proxy.$Proxy10";

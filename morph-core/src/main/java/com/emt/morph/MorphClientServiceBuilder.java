@@ -1,48 +1,63 @@
 package com.emt.morph;
 
 import com.emt.morph.converter.MessageConverter;
-import com.emt.morph.impl.DefaultHttpClientProvider;
-import com.emt.morph.impl.DefaultSystemEnvironmentPropertyResolver;
+import com.emt.morph.factory.HttpClientProviderFactory;
+import com.emt.morph.factory.LoadBalancerFactory;
+import com.emt.morph.factory.NameResolverFactory;
 import com.emt.morph.http.HttpClientProvider;
+import com.emt.morph.impl.DefaultSystemEnvironmentPropertyResolver;
+import com.emt.morph.utils.Asserts;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MorphClientServiceBuilder {
 
-   private boolean logInvocationTime = false;
-   private boolean debug = false;
-   private LoadBalancer loadBalancer;
+   private HttpClientProviderFactory httpClientProviderFactory;
+   private LoadBalancerFactory loadBalancerFactory;
+   private NameResolverFactory nameResolverFactory;
+
+   private Set<Class<? extends NameResolver>> nameResolvers = new HashSet<>();
+   private Set<Class<? extends LoadBalancer>> loadBalancers = new HashSet<>();
+   private Set<Class<? extends HttpClientProvider>> httpClientProviders = new HashSet<>();
+   //
    private List<MessageConverter<?>> messageConverters = new ArrayList<>();
-   private HttpClientProvider httpClientProvider = new DefaultHttpClientProvider();
    private PathPropertyResolver pathPropertyResolver = new DefaultSystemEnvironmentPropertyResolver();
-   private List<NameResolver> nameResolvers = new ArrayList<>();
 
    private MorphClientServiceBuilder() {
+
    }
 
-   public MorphClientServiceBuilder logInvocationTime() {
-      this.logInvocationTime = true;
+   public <T extends MessageConverter<?>> MorphClientServiceBuilder addMessageConverter(T t) {
+      this.addMessageConverter(Collections.singleton(t));
       return this;
    }
 
-   public MorphClientServiceBuilder debug() {
-      this.debug = true;
+   public <T extends MessageConverter<?>> MorphClientServiceBuilder addMessageConverter(Collection<T> t) {
+      Asserts.notNull(t, "MessageConverter");
+      this.messageConverters.addAll(t);
       return this;
    }
 
-   public MorphClientServiceBuilder setLoadBalancer(LoadBalancer loadBalancer) {
-      this.loadBalancer = loadBalancer;
+   public MorphClientServiceBuilder addNameResolver(Class<? extends NameResolver> nameResolverClass) {
+      Asserts.notNull(nameResolverClass, "NameResolver Class");
+      this.nameResolvers.add(nameResolverClass);
       return this;
    }
 
-   public MorphClientServiceBuilder setMessageConverters(List<MessageConverter<?>> messageConverters) {
-      this.messageConverters = messageConverters;
+   public MorphClientServiceBuilder addLoadBalancer(Class<? extends LoadBalancer> loadBalancerClass) {
+      Asserts.notNull(loadBalancerClass, "LoadBalanacer Class");
+      this.loadBalancers.add(loadBalancerClass);
       return this;
    }
 
-   public MorphClientServiceBuilder setHttpClientProvider(HttpClientProvider httpClientProvider) {
-      this.httpClientProvider = httpClientProvider;
+   public MorphClientServiceBuilder addHttpClientProvider(Class<? extends HttpClientProvider> httpClientProvider) {
+      Asserts.notNull(httpClientProvider, "HttpClientProvider Class");
+      this.httpClientProviders.add(httpClientProvider);
       return this;
    }
 
@@ -51,8 +66,18 @@ public class MorphClientServiceBuilder {
       return this;
    }
 
-   public MorphClientServiceBuilder setNameResolvers(List<NameResolver> nameResolvers) {
-      this.nameResolvers = nameResolvers;
+   public MorphClientServiceBuilder setHttpClientProviderFactory(HttpClientProviderFactory httpClientProviderFactory) {
+      this.httpClientProviderFactory = httpClientProviderFactory;
+      return this;
+   }
+
+   public MorphClientServiceBuilder setLoadBalancerFactory(LoadBalancerFactory loadBalancerFactory) {
+      this.loadBalancerFactory = loadBalancerFactory;
+      return this;
+   }
+
+   public MorphClientServiceBuilder setNameResolverFactory(NameResolverFactory nameResolverFactory) {
+      this.nameResolverFactory = nameResolverFactory;
       return this;
    }
 
@@ -61,6 +86,6 @@ public class MorphClientServiceBuilder {
    }
 
    public MorphClient build() {
-      return new MorphClientServiceImpl(logInvocationTime, debug, loadBalancer, messageConverters, httpClientProvider, pathPropertyResolver, nameResolvers);
+      return new MorphClientServiceImpl(this.httpClientProviderFactory, this.loadBalancerFactory, this.nameResolverFactory, this.nameResolvers, this.loadBalancers, this.httpClientProviders, this.messageConverters, this.pathPropertyResolver);
    }
 }

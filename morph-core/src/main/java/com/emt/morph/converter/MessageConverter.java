@@ -13,7 +13,7 @@ public interface MessageConverter<T> {
 
    T read(InputStream body, ContentType contentType, Type type, Class<?> tClass) throws MessageConverterException;
 
-   HttpEntity write(Object body, ContentType contentType,Class<?> tclass) throws MessageConverterException;
+   HttpEntity write(Object body, ContentType contentType, Class<?> tClass) throws MessageConverterException;
 
 
 }

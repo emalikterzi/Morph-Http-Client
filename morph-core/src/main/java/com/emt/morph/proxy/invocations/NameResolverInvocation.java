@@ -2,12 +2,13 @@ package com.emt.morph.proxy.invocations;
 
 import com.emt.morph.AbstractListener;
 import com.emt.morph.AuthorityListenerProvider;
-import com.emt.morph.LoadBalancer;
 import com.emt.morph.ImmutableRemoteAddressGroup;
+import com.emt.morph.LoadBalancer;
 import com.emt.morph.exception.MorphException;
+import com.emt.morph.http.ClientHttpMethod;
+import com.emt.morph.meta.ImmutableExecutionMeta;
 import com.emt.morph.proxy.Invocation;
 import com.emt.morph.proxy.InvocationSession;
-import com.emt.morph.http.ClientHttpMethod;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -18,15 +19,16 @@ import org.apache.http.client.utils.URIBuilder;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Iterator;
+import java.util.List;
 
 public class NameResolverInvocation implements Invocation {
 
    private final AuthorityListenerProvider authorityListenerProvider;
-   private final LoadBalancer loadBalancer;
+   private final List<LoadBalancer> loadBalancerList;
 
-   public NameResolverInvocation(AuthorityListenerProvider authorityListenerProvider, LoadBalancer loadBalancer) {
+   public NameResolverInvocation(AuthorityListenerProvider authorityListenerProvider, List<LoadBalancer> loadBalancerList) {
       this.authorityListenerProvider = authorityListenerProvider;
-      this.loadBalancer = loadBalancer;
+      this.loadBalancerList = loadBalancerList;
    }
 
    @Override
@@ -42,8 +44,10 @@ public class NameResolverInvocation implements Invocation {
          selectedUri = baseUri;
 
       } else {
-         Iterator<ImmutableRemoteAddressGroup> remoteAddressGroups = abstractListener.getRemoteAddressGroups();
 
+         ImmutableExecutionMeta immutableExecutionMeta = chain.getContext().getImmutableExecutionMeta();
+         Iterator<ImmutableRemoteAddressGroup> remoteAddressGroups = abstractListener.getRemoteAddressGroups();
+         LoadBalancer loadBalancer = findSuitableLoadBalancer(immutableExecutionMeta);
          ImmutableRemoteAddressGroup remoteAddressGroup = loadBalancer.select(remoteAddressGroups);
 
          selectedUri = new URIBuilder(baseUri)
@@ -84,6 +88,12 @@ public class NameResolverInvocation implements Invocation {
       chain.invoke(callee, method, args);
 
       return null;
+   }
+
+   private LoadBalancer findSuitableLoadBalancer(ImmutableExecutionMeta immutableExecutionMeta) {
+      Class tClass = immutableExecutionMeta.getLoadBalancer();
+      return this.loadBalancerList.stream().filter(x -> x.getClass().equals(tClass))
+              .findFirst().get();
    }
 
 
