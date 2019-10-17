@@ -3,6 +3,8 @@ package com.emt.morph.impl;
 import com.emt.morph.Constants;
 import com.emt.morph.LoadBalancer;
 import com.emt.morph.MethodExecutionMetaProvider;
+import com.emt.morph.api.MorphHttpClientProvider;
+import com.emt.morph.api.MorphLoadBalancer;
 import com.emt.morph.http.ClientHttpMethod;
 import com.emt.morph.http.HttpClientProvider;
 import com.emt.morph.meta.ExecutionMeta;
@@ -160,9 +162,25 @@ public class ReflectionExecutionMetaProvider implements MethodExecutionMetaProvi
          checkForMethodType(annotation, executionMeta);
          checkForPath(annotation, executionMeta);
          checkForMediaType(annotation, executionMeta);
+         checkForLoadBalancer(annotation, executionMeta);
+         checkForHttpClientProvider(annotation, executionMeta);
       }
 
       return executionMeta;
+   }
+
+   private void checkForLoadBalancer(Annotation annotation, ExecutionMeta executionMeta) {
+      if (annotation.annotationType().equals(Constants.MORPH_LOAD_BALANCER_CLASS)) {
+         MorphLoadBalancer morphLoadBalancer = (MorphLoadBalancer) annotation;
+         executionMeta.setLoadBalancer(morphLoadBalancer.value());
+      }
+   }
+
+   private void checkForHttpClientProvider(Annotation annotation, ExecutionMeta executionMeta) {
+      if (annotation.annotationType().equals(Constants.MORPH_HTTP_CLIENT_PROVIDER_CLASS)) {
+         MorphHttpClientProvider morphHttpClientProvider = (MorphHttpClientProvider) annotation;
+         executionMeta.setHttpClientProvider(morphHttpClientProvider.value());
+      }
    }
 
    private void checkForMediaType(Annotation annotation, ExecutionMeta executionMeta) {

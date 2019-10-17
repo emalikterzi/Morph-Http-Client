@@ -3,6 +3,7 @@ package com.zookeeper;
 import com.emt.morph.MorphClientServiceBuilder;
 import com.emt.morph.factory.NameResolverFactory;
 import com.emt.morph.zookeeper.CuratorFrameworkClients;
+import com.emt.morph.zookeeper.CustomLoadBalancer;
 import com.emt.morph.zookeeper.resolver.DefaultNameResolverFactory;
 import com.emt.morph.zookeeper.resolver.DefaultZookeeperResolver;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,6 +43,7 @@ public class ZookeeperTest {
               MorphClientServiceBuilder
                       .newBuilder()
                       .setNameResolverFactory(nameResolverFactory)
+                      .addLoadBalancer(CustomLoadBalancer.class)
                       .addNameResolver(DefaultZookeeperResolver.class)
                       .build().morph(ZookeeperService.class);
 

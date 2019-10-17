@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 public class NameResolverInvocation implements Invocation {
 
@@ -92,8 +93,13 @@ public class NameResolverInvocation implements Invocation {
 
    private LoadBalancer findSuitableLoadBalancer(ImmutableExecutionMeta immutableExecutionMeta) {
       Class tClass = immutableExecutionMeta.getLoadBalancer();
-      return this.loadBalancerList.stream().filter(x -> x.getClass().equals(tClass))
-              .findFirst().get();
+      Optional<LoadBalancer> loadBalancer = this.loadBalancerList.stream().filter(x -> x.getClass().equals(tClass))
+              .findFirst();
+
+      if (!loadBalancer.isPresent())
+         throw new MorphException("No suitable LoadBalancer For Class :  " + tClass.getName());
+
+      return loadBalancer.get();
    }
 
 

@@ -1,5 +1,7 @@
 package com.zookeeper.service;
 
+import com.emt.morph.api.MorphLoadBalancer;
+import com.emt.morph.zookeeper.CustomLoadBalancer;
 import com.zookeeper.model.User;
 
 import javax.ws.rs.Consumes;
@@ -13,6 +15,7 @@ public interface ZookeeperService {
    @GET
    @Path("/api")
    @Consumes("application/json")
+   @MorphLoadBalancer(CustomLoadBalancer.class)
    List<User> getAllUsers();
 
 }

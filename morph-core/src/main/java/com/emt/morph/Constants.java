@@ -1,6 +1,9 @@
 package com.emt.morph;
 
 
+import com.emt.morph.api.MorphHttpClientProvider;
+import com.emt.morph.api.MorphLoadBalancer;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.Path;
@@ -22,6 +25,10 @@ public interface Constants {
    Class<Consumes> CONSUMES_CLASS = Consumes.class;
 
    Class<Produces> PRODUCES_CLASS = Produces.class;
+
+   Class<MorphLoadBalancer> MORPH_LOAD_BALANCER_CLASS = MorphLoadBalancer.class;
+
+   Class<MorphHttpClientProvider> MORPH_HTTP_CLIENT_PROVIDER_CLASS = MorphHttpClientProvider.class;
 
 
 }
