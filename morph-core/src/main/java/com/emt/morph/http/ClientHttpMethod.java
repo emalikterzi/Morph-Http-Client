@@ -21,12 +21,12 @@ public enum ClientHttpMethod {
       this.typeClass = typeClass;
    }
 
-   public Class<? extends Annotation> getTypeClass() {
-      return typeClass;
-   }
-
    public static Optional<ClientHttpMethod> findByClass(Class<?> classs) {
       return Arrays.stream(ClientHttpMethod.values()).filter(x -> x.getTypeClass().equals(classs))
               .findFirst();
+   }
+
+   public Class<? extends Annotation> getTypeClass() {
+      return typeClass;
    }
 }

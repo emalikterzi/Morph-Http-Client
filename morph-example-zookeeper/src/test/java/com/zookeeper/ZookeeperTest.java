@@ -30,6 +30,9 @@ public class ZookeeperTest {
 
    @Test
    public void nodeTest() {
+      System.out.println(1e7);
+      System.out.println(1e2);
+      System.out.println(1e3);
       String mainPath = "/zookeeper/quota";
       NameResolverFactory nameResolverFactory
               = new DefaultNameResolverFactory(this.curatorFramework, mainPath, new ObjectMapper());
@@ -42,7 +45,9 @@ public class ZookeeperTest {
                       .addNameResolver(DefaultZookeeperResolver.class)
                       .build().morph(ZookeeperService.class);
 
-      zookeeperService.getAllUsers();
-
+      System.out.println(zookeeperService.getAllUsers());
+      System.out.println(zookeeperService.getAllUsers());
+      System.out.println(zookeeperService.getAllUsers());
+      System.out.println(zookeeperService.getAllUsers());
    }
 }

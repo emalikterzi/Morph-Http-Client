@@ -30,6 +30,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public final class MorphClientServiceImpl implements MorphClient {
@@ -57,6 +59,7 @@ public final class MorphClientServiceImpl implements MorphClient {
    private final List<NameResolver> nameResolverInstances = new ArrayList<>();
    private final List<LoadBalancer> loadBalancerInstances = new ArrayList<>();
    private final List<HttpClientProvider> httpClientProviderInstances = new ArrayList<>();
+   private final Executor executorPool = Executors.newFixedThreadPool(4);
 
    public MorphClientServiceImpl(HttpClientProviderFactory httpClientProviderFactory, LoadBalancerFactory loadBalancerFactory, NameResolverFactory nameResolverFactory, Set<Class<? extends NameResolver>> nameResolvers, Set<Class<? extends LoadBalancer>> loadBalancers, Set<Class<? extends HttpClientProvider>> httpClientProviders, List<MessageConverter<?>> messageConverters, PathPropertyResolver pathPropertyResolver) {
       this.httpClientProviderFactory =
@@ -75,7 +78,7 @@ public final class MorphClientServiceImpl implements MorphClient {
       this.httpResponseCloser = new HttpResponseCloserImpl();
       this.methodExecutionMetaProvider = new ReflectionExecutionMetaProvider();
       this.preInitializedMethodExecutionMetaProvider = new LibraryPreInitializer(this.methodExecutionMetaProvider);
-      this.authorityListenerProvider = new DefaultAuthorityListenerProvider(this.nameResolverInstances);
+      this.authorityListenerProvider = new DefaultAuthorityListenerProvider(this.nameResolverInstances, this.executorPool);
       this.invocations = buildInvocations();
       this.startShutDownListener();
    }

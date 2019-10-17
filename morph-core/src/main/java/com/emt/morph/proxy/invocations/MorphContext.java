@@ -18,14 +18,13 @@ public final class MorphContext {
    private URI selectedUri;
    private HttpRequestBase httpRequestBase;
    private boolean bodyNeeded = false;
+   private ImmutableExecutionMeta immutableExecutionMeta;
 
    MorphContext(Method executionMethod, Object[] args) {
       this.executionMethod = executionMethod;
       this.args = args;
       this.uuid = UUID.randomUUID().toString();
    }
-
-   private ImmutableExecutionMeta immutableExecutionMeta;
 
    public ImmutableExecutionMeta getImmutableExecutionMeta() {
       return immutableExecutionMeta;
@@ -55,17 +54,17 @@ public final class MorphContext {
       return httpRequestBase;
    }
 
+   protected void setHttpRequestBase(HttpRequestBase httpRequestBase) {
+      this.httpRequestBase = httpRequestBase;
+      if (httpRequestBase instanceof HttpEntityEnclosingRequest)
+         this.bodyNeeded = true;
+   }
+
    public boolean isBodyNeeded() {
       return bodyNeeded;
    }
 
    public String getUuid() {
       return uuid;
-   }
-
-   protected void setHttpRequestBase(HttpRequestBase httpRequestBase) {
-      this.httpRequestBase = httpRequestBase;
-      if (httpRequestBase instanceof HttpEntityEnclosingRequest)
-         this.bodyNeeded = true;
    }
 }

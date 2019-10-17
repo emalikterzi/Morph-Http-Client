@@ -2,9 +2,8 @@ package com.emt.morph;
 
 import java.util.Iterator;
 
-public interface LoadBalancer
-{
+public interface LoadBalancer {
 
-    ImmutableRemoteAddressGroup select(Iterator<ImmutableRemoteAddressGroup> inetSocketAddressList);
+   ImmutableRemoteAddressGroup select(Iterator<ImmutableRemoteAddressGroup> inetSocketAddressList);
 
 }

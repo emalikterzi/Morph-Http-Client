@@ -1,7 +1,6 @@
 package com.zookeeper.model;
 
-public class User
-{
+public class User {
 
    private int id;
    private String firstName;
@@ -41,5 +40,14 @@ public class User
       this.lastName = lastName;
    }
 
-
+   @Override
+   public String toString() {
+      final StringBuilder sb = new StringBuilder("User{");
+      sb.append("id=").append(id);
+      sb.append(", firstName='").append(firstName).append('\'');
+      sb.append(", lastName='").append(lastName).append('\'');
+      sb.append(", email='").append(email).append('\'');
+      sb.append('}');
+      return sb.toString();
+   }
 }

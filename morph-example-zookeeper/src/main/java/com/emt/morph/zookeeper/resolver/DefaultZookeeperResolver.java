@@ -118,10 +118,7 @@ public class DefaultZookeeperResolver implements NameResolver, TreeCacheListener
       switch (event.getType()) {
          case INITIALIZED:
             cacheReadyLatch.countDown();
-            System.out.println("initialize start");
             updatePathInfo();
-            System.out.println("initialized");
-            System.out.println(this.addressGroup);
             break;
 
          case NODE_ADDED:

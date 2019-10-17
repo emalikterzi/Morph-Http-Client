@@ -2,9 +2,19 @@ package com.emt.morph;
 
 import java.util.Iterator;
 
-public abstract class AbstractListener implements Listener
-{
+public abstract class AbstractListener implements Listener {
 
-    public abstract Iterator<ImmutableRemoteAddressGroup> getRemoteAddressGroups();
+   private boolean started;
 
+   public abstract Iterator<ImmutableRemoteAddressGroup> getRemoteAddressGroups();
+
+
+   public boolean isStarted() {
+      return started;
+   }
+
+
+   public void start() {
+      this.started = true;
+   }
 }

@@ -32,6 +32,10 @@ public class MorphClientServiceBuilder {
 
    }
 
+   public static MorphClientServiceBuilder newBuilder() {
+      return new MorphClientServiceBuilder();
+   }
+
    public <T extends MessageConverter<?>> MorphClientServiceBuilder addMessageConverter(T t) {
       this.addMessageConverter(Collections.singleton(t));
       return this;
@@ -79,10 +83,6 @@ public class MorphClientServiceBuilder {
    public MorphClientServiceBuilder setNameResolverFactory(NameResolverFactory nameResolverFactory) {
       this.nameResolverFactory = nameResolverFactory;
       return this;
-   }
-
-   public static MorphClientServiceBuilder newBuilder() {
-      return new MorphClientServiceBuilder();
    }
 
    public MorphClient build() {

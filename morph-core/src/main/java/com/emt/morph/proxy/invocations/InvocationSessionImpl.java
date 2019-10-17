@@ -8,9 +8,9 @@ import java.util.Iterator;
 
 public class InvocationSessionImpl implements InvocationSession {
 
-   private Object result;
    private final Iterator<Invocation> tasks;
    private final MorphContext context;
+   private Object result;
 
    public InvocationSessionImpl(Iterator<Invocation> tasks, Method executionMethod, Object[] args) {
       this.tasks = tasks;
