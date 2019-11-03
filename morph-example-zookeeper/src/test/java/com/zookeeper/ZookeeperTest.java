@@ -1,12 +1,13 @@
 package com.zookeeper;
 
-import com.emt.morph.MorphClientServiceBuilder;
-import com.emt.morph.factory.NameResolverFactory;
-import com.emt.morph.zookeeper.CuratorFrameworkClients;
-import com.emt.morph.zookeeper.CustomLoadBalancer;
-import com.emt.morph.zookeeper.resolver.DefaultNameResolverFactory;
-import com.emt.morph.zookeeper.resolver.DefaultZookeeperResolver;
+import com.emtdev.morph.MorphClientServiceBuilder;
+import com.emtdev.morph.bandit.loadbalancer.BanditLoadBalancer;
+import com.emtdev.morph.factory.NameResolverFactory;
+import com.emtdev.morph.zookeeper.CuratorFrameworkClients;
+import com.emtdev.morph.zookeeper.resolver.DefaultNameResolverFactory;
+import com.emtdev.morph.zookeeper.resolver.DefaultZookeeperResolver;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zookeeper.bandit.BanditLoadBalancerFactory;
 import com.zookeeper.service.ZookeeperService;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.jupiter.api.AfterEach;
@@ -30,7 +31,7 @@ public class ZookeeperTest {
 
 
    @Test
-   public void nodeTest() {
+   public void nodeTest() throws Exception {
       System.out.println(1e7);
       System.out.println(1e2);
       System.out.println(1e3);
@@ -43,10 +44,13 @@ public class ZookeeperTest {
               MorphClientServiceBuilder
                       .newBuilder()
                       .setNameResolverFactory(nameResolverFactory)
-                      .addLoadBalancer(CustomLoadBalancer.class)
+                      .setLoadBalancerFactory(new BanditLoadBalancerFactory())
+                      .addLoadBalancer(BanditLoadBalancer.class)
                       .addNameResolver(DefaultZookeeperResolver.class)
                       .build().morph(ZookeeperService.class);
 
+
+      Thread.sleep(1000 * 5);
       System.out.println(zookeeperService.getAllUsers());
       System.out.println(zookeeperService.getAllUsers());
       System.out.println(zookeeperService.getAllUsers());

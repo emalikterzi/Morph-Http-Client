@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.emt.morph</groupId>
+    <groupId>com.emtdev</groupId>
     <artifactId>morph-example-zookeeper</artifactId>
     <version>0.0.1</version>
     <packaging>jar</packaging>
@@ -16,8 +16,14 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.emt.morph</groupId>
+            <groupId>com.emtdev</groupId>
             <artifactId>morph-core</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.emtdev</groupId>
+            <artifactId>morph-loadbalancer-experimental</artifactId>
             <version>0.0.1</version>
         </dependency>
 

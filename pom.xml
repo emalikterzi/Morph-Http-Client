@@ -11,8 +11,11 @@
     <packaging>pom</packaging>
 
     <modules>
+
         <module>morph-core</module>
-        <module>morph-example-consul</module>
+        <module>morph-loadbalancer-experimental</module>
+
+        <!--        <module>morph-example-consul</module>-->
         <module>morph-example-zookeeper</module>
         <module>sample-resource</module>
     </modules>

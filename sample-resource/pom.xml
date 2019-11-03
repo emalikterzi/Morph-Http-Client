@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
-    <groupId>com.emt.morph</groupId>
+    <groupId>com.emtdev</groupId>
     <artifactId>morph-demo-resource</artifactId>
     <version>0.0.1</version>
     <name>demo-resource</name>

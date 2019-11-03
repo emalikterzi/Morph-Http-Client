@@ -1,9 +1,9 @@
 package com.test;
 
-import com.emt.morph.MorphClient;
-import com.emt.morph.MorphClientServiceBuilder;
-import com.emt.morph.converter.DefaultJsonMessageConverter;
-import com.emt.morph.impl.DefaultSystemEnvironmentPropertyResolver;
+import com.emtdev.morph.MorphClient;
+import com.emtdev.morph.MorphClientServiceBuilder;
+import com.emtdev.morph.converter.DefaultJsonMessageConverter;
+import com.emtdev.morph.impl.SystemEnvironmentPropertyResolver;
 import com.model.regres.User;
 import com.service.RegresService;
 import org.junit.jupiter.api.Assertions;
@@ -25,7 +25,7 @@ public class TestServiceLayer {
       MorphClient morphClient =
               MorphClientServiceBuilder.newBuilder()
                       .addMessageConverter(new DefaultJsonMessageConverter())
-                      .setPathPropertyResolver(new DefaultSystemEnvironmentPropertyResolver())
+                      .setPathPropertyResolver(new SystemEnvironmentPropertyResolver())
                       .build();
 
 
@@ -34,7 +34,7 @@ public class TestServiceLayer {
 
    @Test
    public void test() {
-      List<User> userList = this.regresService.getAllUsers();
+      List<User> userList = this.regresService.getAllUsers(null);
 
       Assertions.assertTrue(Objects.nonNull(userList));
       Assertions.assertFalse(userList.isEmpty());
