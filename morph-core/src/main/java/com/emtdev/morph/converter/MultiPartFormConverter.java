@@ -2,11 +2,8 @@ package com.emtdev.morph.converter;
 
 import com.emtdev.morph.exception.MessageConverterException;
 import com.emtdev.morph.meta.ImmutableParameterMeta;
-import com.emtdev.morph.utils.ParameterMetaUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.FormBodyPart;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;

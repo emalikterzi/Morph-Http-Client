@@ -13,13 +13,11 @@ import java.util.List;
 public class BanditLoadBalancer implements LoadBalancer {
 
    private final BanditAlgorithm banditAlgorithm;
+   private List<ServerAvgResponseTime> algorithmArms = new ArrayList<>();
 
    public BanditLoadBalancer(BanditAlgorithm banditAlgorithm) {
       this.banditAlgorithm = banditAlgorithm;
    }
-
-   private List<ServerAvgResponseTime> algorithmArms = new ArrayList<>();
-
 
    @Override
    public ImmutableRemoteAddressGroup select(Iterator<ImmutableRemoteAddressGroup> inetSocketAddressList) {
