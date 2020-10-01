@@ -11,10 +11,10 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>morph-api</module>
         <module>morph-core</module>
-        <module>morph-example-consul</module>
-        <module>morph-example-zookeeper</module>
-        <module>sample-resource</module>
+
+        <!--        <module>sample-resource</module>-->
     </modules>
 
 </project>
