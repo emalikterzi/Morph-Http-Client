@@ -17,7 +17,7 @@ public class TestService {
 
    @PostConstruct
    public void init() {
-      userList.add(new User(1, "enes", "terzi", "e.erzi@gmail.com"));
+      userList.add(new User(1, "enes", "terzi", "e.terzi@gmail.com"));
       userList.add(new User(2, "semih", "terzi", "s.terzi@gmail.com"));
       userList.add(new User(3, "suheyb", "terzi", "s.terzi@gmail.com"));
       userList.add(new User(4, "hatice", "terzi", "h.terci@gmail.com"));
