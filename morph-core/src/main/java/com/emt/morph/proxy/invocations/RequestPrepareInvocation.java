@@ -1,134 +1,67 @@
 package com.emt.morph.proxy.invocations;
 
-import com.emt.morph.PathPropertyResolver;
-import com.emt.morph.meta.ImmutableExecutionMeta;
-import com.emt.morph.meta.ImmutableParameterMeta;
+import com.emt.morph.common.HttpMethod;
 import com.emt.morph.proxy.Invocation;
+import com.emt.morph.proxy.InvocationContext;
 import com.emt.morph.proxy.InvocationSession;
+import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpOptions;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpTrace;
+import org.apache.http.client.methods.HttpUriRequest;
 
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 public class RequestPrepareInvocation implements Invocation {
 
-   private final PathPropertyResolver pathPropertyResolver;
+    @Override
+    public Object invoke(Object callee, Method method, Object[] args, InvocationSession chain) throws Throwable {
+        InvocationContext invocationContext = chain.getContext();
+        HttpUriRequest httpRequest = determineRequest(invocationContext.getMethodAnnotationConfig().getMethod(), invocationContext.getUri());
 
-   private final Pattern pattern = Pattern.compile("([$][{][\\w]+([.][\\w]+)*[}])");
+        if (!Objects.isNull(invocationContext.getHttpEntity())) {
 
-   private final Pattern urlPattern = Pattern.compile("([{][\\w]*[}])");
-
-   public RequestPrepareInvocation(PathPropertyResolver pathPropertyResolver) {
-      this.pathPropertyResolver = pathPropertyResolver;
-   }
-
-   @Override
-   public Object invoke(Object callee, Method method, Object[] args, InvocationSession chain) throws Throwable {
-      String path = chain.getContext()
-              .getImmutableExecutionMeta()
-              .getPath();
-
-      ImmutableExecutionMeta immutableExecutionMeta
-              = chain.getContext().getImmutableExecutionMeta();
-
-
-      Matcher matcher = pattern.matcher(path);
-
-      while (matcher.find()) {
-         String orgValue = matcher.group();
-         String key = orgValue.replace("${", "")
-                 .replace("}", "").trim();
-
-         String value = pathPropertyResolver.resolve(key);
-
-         if (value == null) {
-            //todo change
-            throw new RuntimeException("value not found : " + key);
-         }
-
-         path = path.replace(orgValue, value);
-      }
-
-      Matcher urlMatcher = urlPattern.matcher(path);
-
-      List<ImmutableParameterMeta> pathParamList = immutableExecutionMeta.getMethodParameterMeta()
-              .stream().filter(x -> x.getMetaType().equals(ImmutableParameterMeta.MetaType.PATH_PARAM))
-              .collect(Collectors.toList());
-
-      while (urlMatcher.find()) {
-         String orgValue = urlMatcher.group();
-         String key = orgValue.replace("{", "")
-                 .replace("}", "").trim();
-         boolean status = false;
-         for (ImmutableParameterMeta each : pathParamList) {
-            if (each.getValue().equals(key)) {
-               Object value = null;
-               try {
-                  value = args[each.getIndex()];
-               } catch (Exception e) {
-                  value = each.getDefaultValue();
-               }
-
-               if (value == null) {
-                  value = each.getDefaultValue();
-               }
-
-               if (value == null)
-                  throw new RuntimeException("query param cannot be null");
-
-               path = path.replace(orgValue, value.toString());
-               status = true;
-
+            if (httpRequest instanceof HttpEntityEnclosingRequest) {
+                HttpEntityEnclosingRequest request = (HttpEntityEnclosingRequest) httpRequest;
+                request.setEntity(invocationContext.getHttpEntity());
             }
-         }
-         if (!status)
-            throw new RuntimeException("path param not  found");
-      }
+        }
+        invocationContext.setHttpRequest(httpRequest);
+        chain.invoke(callee, method, args);
+        return null;
+    }
 
 
-      List<ImmutableParameterMeta> queryParams = immutableExecutionMeta.getMethodParameterMeta()
-              .stream().filter(x -> x.getMetaType().equals(ImmutableParameterMeta.MetaType.QUERY_PARAM))
-              .collect(Collectors.toList());
+    private HttpUriRequest determineRequest(HttpMethod httpMethod, URI uri) {
 
-      StringBuilder pathBuilder = new StringBuilder(path);
+        switch (httpMethod) {
+            case GET:
+                return new HttpGet(uri);
+            case PUT:
+                return new HttpPut(uri);
+            case HEAD:
+                return new HttpHead(uri);
+            case POST:
+                return new HttpPost(uri);
+            case PATCH:
+                return new HttpPatch(uri);
+            case TRACE:
+                return new HttpTrace(uri);
+            case DELETE:
+                return new HttpDelete(uri);
+            case OPTIONS:
+                return new HttpOptions(uri);
+        }
 
-      for (
-              int i = 0; i < queryParams.size(); i++) {
-         ImmutableParameterMeta queryParam = queryParams.get(i);
-         Object value;
-         try {
-            value = args[queryParam.getIndex()];
-         } catch (Exception e) {
-            value = queryParam.getDefaultValue();
-         }
+        return null;
+    }
 
-         if (value == null) {
-            value = queryParam.getDefaultValue();
-         }
-
-         if (value == null)
-            throw new RuntimeException("query param cannot be null");
-
-         if (i == 0) {
-            pathBuilder.append("?");
-         } else
-            pathBuilder.append("&");
-
-         pathBuilder.append(queryParam.getValue())
-                 .append("=")
-                 .append(value);
-
-      }
-      URI uri = URI.create(pathBuilder.toString());
-      chain.getContext()
-              .setUri(uri);
-
-
-      chain.invoke(callee, method, args);
-      return null;
-   }
 
 }

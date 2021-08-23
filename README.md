@@ -4,8 +4,6 @@ Dynamic Rest Client Via Interfaces
 
 ## Introduction
 
-
-
 ## Sample
 
 Sample Interface
@@ -15,25 +13,31 @@ Sample Interface
 @Path("${baseUrl}")
 public interface RegresService {
 
-   @GET
-   List<User> getAllUsers();
+ @GET
+    @Consumes("application/json")
+    List<User> getAllUsers();
 
+    @GET
+    @Path("/getAsMap")
+    @Consumes("application/json")
+    Map<Integer, String> getAsMap();
 
-   @GET
-   @Path("/getAsMap")
-   Map<Integer, String> getAsMap();
+    @PUT
+    @Path("/user/{id}")
+    @Consumes("application/json")
+    User updateUser(@PathParam("id") int id, User user);
 
-   @PUT
-   @Path("/user/{id}")
-   @Consumes("application/json")
-   @Produces("application/json")
-   User updateUser(@PathParam("id") int id, User user);
+    @POST
+    @Path("/feedback")
+    @Consumes("application/x-www-form-urlencoded")
+    String handleBrowserSubmissions(Feedback feedback);
 
-   @PUT
-   @Path("/user/{id}")
-   @Consumes("application/json")
-   @Produces("application/json")
-   String updateUserAsStr(@PathParam("id") int id, User user);
+    @POST
+    @Path("/feedback/multipart")
+    @Consumes("multipart/form-data")
+    @Produces("text/plain")
+    String handleMultiPartRequest(@MultiPart(name = "name", mimeType = "text/plain") String name,
+                                  @MultiPart(name = "feedback", mimeType = "application/json") Feedback feedback);
 
 }
 ```

@@ -11,10 +11,16 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>morph-annotation-api</module>
+        <module>morph-annotation-processor-spring</module>
+        <module>morph-annotation-processor-jersey</module>
+
         <module>morph-core</module>
-        <module>morph-example-consul</module>
-        <module>morph-example-zookeeper</module>
-        <module>sample-resource</module>
+
+        <module>example-customer-service</module>
+        <module>example-user-service</module>
+        <module>example-user-service-api</module>
+
     </modules>
 
 </project>

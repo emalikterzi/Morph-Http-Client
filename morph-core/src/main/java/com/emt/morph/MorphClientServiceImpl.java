@@ -1,157 +1,102 @@
 package com.emt.morph;
 
-import com.emt.morph.converter.DefaultJsonMessageConverter;
-import com.emt.morph.converter.MessageConverter;
-import com.emt.morph.exception.MorphException;
-import com.emt.morph.factory.HttpClientProviderFactory;
-import com.emt.morph.factory.LoadBalancerFactory;
-import com.emt.morph.factory.NameResolverFactory;
-import com.emt.morph.factory.impl.DefaultMorphFactory;
-import com.emt.morph.http.HttpClientProvider;
-import com.emt.morph.impl.DefaultAuthorityListenerProvider;
-import com.emt.morph.impl.DefaultHttpClientProvider;
-import com.emt.morph.impl.HttpResponseCloserImpl;
-import com.emt.morph.impl.ReflectionExecutionMetaProvider;
-import com.emt.morph.impl.SelectFirstLoadBalancer;
+import com.emt.morph.annotation.AnnotationMetaProcessor;
+import com.emt.morph.config.InvocationContextConfig;
+import com.emt.morph.http.message.FileMessageConverter;
+import com.emt.morph.http.message.InputStreamMessageConverter;
+import com.emt.morph.http.message.JsonHttpMessageConverter;
+import com.emt.morph.http.message.MessageConverterUtils;
+import com.emt.morph.http.message.MultipartMessageConverter;
+import com.emt.morph.http.message.StringMessageConverter;
+import com.emt.morph.http.message.UrlEncodedMessageConverter;
+import com.emt.morph.http.message.api.HttpMessageConverter;
+import com.emt.morph.http.nameresolver.NameResolverProvider;
+import com.emt.morph.loadbalancer.LoadBalancer;
+import com.emt.morph.loadbalancer.RandomLoadBalancer;
+import com.emt.morph.property.PropertyResolver;
+import com.emt.morph.property.SystemPropertyResolver;
 import com.emt.morph.proxy.ExecutionHandler;
 import com.emt.morph.proxy.Invocation;
-import com.emt.morph.proxy.invocations.ExecutionMetaInvocation;
+import com.emt.morph.proxy.invocations.AnnotationInvocation;
+import com.emt.morph.proxy.invocations.LoadBalancerInvocation;
 import com.emt.morph.proxy.invocations.LoggingInvocation;
-import com.emt.morph.proxy.invocations.NameResolverInvocation;
-import com.emt.morph.proxy.invocations.RequestBodyPrepareInvocation;
-import com.emt.morph.proxy.invocations.RequestFinalizeInvocation;
+import com.emt.morph.proxy.invocations.NameResolverSelector;
+import com.emt.morph.proxy.invocations.ParameterInvocation;
+import com.emt.morph.proxy.invocations.PropertyInvocation;
+import com.emt.morph.proxy.invocations.RequestExecutionInvocation;
 import com.emt.morph.proxy.invocations.RequestPrepareInvocation;
 import com.emt.morph.proxy.invocations.TimerInvocation;
-import com.emt.morph.utils.Asserts;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClients;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 public final class MorphClientServiceImpl implements MorphClient {
 
-   private final static DefaultMorphFactory DEFAULT_MORPH_FACTORY = new DefaultMorphFactory();
+    private final AnnotationMetaProcessor annotationProcessor;
+    private final HttpClient httpClient = HttpClients.createDefault();
+    private final List<Invocation> invocations;
+    private final LoadBalancer loadBalancer = new RandomLoadBalancer();
+    private final PropertyResolver propertyResolver = new SystemPropertyResolver();
+    private final List<NameResolverProvider<?>> nameResolverProviders = new ArrayList<>();
 
-   private final HttpClientProviderFactory httpClientProviderFactory;
-   private final LoadBalancerFactory loadBalancerFactory;
-   private final NameResolverFactory nameResolverFactory;
+    private final InvocationContextConfig config;
+    private final HttpMessageConverter<?, ?>[] httpMessageConverters = {
+            new JsonHttpMessageConverter(),
+            new UrlEncodedMessageConverter(),
+            new StringMessageConverter(),
+            new FileMessageConverter(),
+            new InputStreamMessageConverter()
+    };
 
-   private final Set<Class<? extends NameResolver>> nameResolvers;
-   private final Set<Class<? extends LoadBalancer>> loadBalancers;
-   private final Set<Class<? extends HttpClientProvider>> httpClientProviders;
-   //
-   private final List<MessageConverter<?>> messageConverters;
-   private final PathPropertyResolver pathPropertyResolver;
+    private final List<HttpMessageConverter<?, ?>> httpMessageConverterList = Arrays.asList(httpMessageConverters);
+    private final MultipartMessageConverter multipartMessageConverter = new MultipartMessageConverter(httpMessageConverterList);
+    private final MessageConverterUtils messageConverterUtils = new MessageConverterUtils(httpMessageConverterList, multipartMessageConverter);
 
+    public MorphClientServiceImpl(AnnotationMetaProcessor annotationProcessor, InvocationContextConfig config) {
+        this.annotationProcessor = annotationProcessor;
+        this.invocations = buildInvocations();
+        this.config = config;
+        Runtime.getRuntime().addShutdownHook(new Thread(this::onClose));
+    }
 
-   private final AuthorityListenerProvider authorityListenerProvider;
-   private final HttpResponseCloser httpResponseCloser;
-   private final MethodExecutionMetaProvider methodExecutionMetaProvider;
-   private final LibraryPreInitializer preInitializedMethodExecutionMetaProvider;
-   private final List<Invocation> invocations;
+    @Override
+    @SuppressWarnings("unchecked")
 
-   private final List<NameResolver> nameResolverInstances = new ArrayList<>();
-   private final List<LoadBalancer> loadBalancerInstances = new ArrayList<>();
-   private final List<HttpClientProvider> httpClientProviderInstances = new ArrayList<>();
-   private final Executor executorPool = Executors.newFixedThreadPool(4);
-
-   public MorphClientServiceImpl(HttpClientProviderFactory httpClientProviderFactory, LoadBalancerFactory loadBalancerFactory, NameResolverFactory nameResolverFactory, Set<Class<? extends NameResolver>> nameResolvers, Set<Class<? extends LoadBalancer>> loadBalancers, Set<Class<? extends HttpClientProvider>> httpClientProviders, List<MessageConverter<?>> messageConverters, PathPropertyResolver pathPropertyResolver) {
-      this.httpClientProviderFactory =
-              Objects.isNull(httpClientProviderFactory) ? DEFAULT_MORPH_FACTORY : httpClientProviderFactory;
-      this.loadBalancerFactory = Objects.isNull(loadBalancerFactory) ? DEFAULT_MORPH_FACTORY : loadBalancerFactory;
-      this.nameResolverFactory = Objects.isNull(nameResolverFactory) ? DEFAULT_MORPH_FACTORY : nameResolverFactory;
-      this.nameResolvers = nameResolvers;
-      this.loadBalancers = loadBalancers;
-      this.httpClientProviders = httpClientProviders;
-      this.messageConverters = messageConverters;
-      this.pathPropertyResolver = pathPropertyResolver;
-
-      this.addDefaults();
-      this.factoryOperations();
-
-      this.httpResponseCloser = new HttpResponseCloserImpl();
-      this.methodExecutionMetaProvider = new ReflectionExecutionMetaProvider();
-      this.preInitializedMethodExecutionMetaProvider = new LibraryPreInitializer(this.methodExecutionMetaProvider);
-      this.authorityListenerProvider = new DefaultAuthorityListenerProvider(this.nameResolverInstances, this.executorPool);
-      this.invocations = buildInvocations();
-      this.startShutDownListener();
-   }
-
-   @Override
-   @SuppressWarnings("unchecked")
-
-   public <T> T morph(Class<T> tClass) {
-      Asserts.notNull(tClass, "Class Must be Provided");
-      try {
-         preInitializedMethodExecutionMetaProvider.initializeAndValidateMetaData(tClass);
-         return (T) Proxy.newProxyInstance(
-                 tClass.getClassLoader(),
-                 new Class[]{tClass},
-                 new ExecutionHandler(invocations));
-      } catch (Exception e) {
-         throw new MorphException(String.format("Initialize Failed For Class [ %s ]", tClass.getName()), e);
-      }
-   }
-
-   private void factoryOperations() {
-      this.nameResolverInstances.addAll(this.nameResolvers.stream()
-              .map(this.nameResolverFactory::createNameResolver).collect(Collectors.toList()));
-
-      this.httpClientProviderInstances.addAll(this.httpClientProviders.stream()
-              .map(this.httpClientProviderFactory::createHttpClientProvider).collect(Collectors.toList()));
-
-      this.loadBalancerInstances.addAll(this.loadBalancers.stream()
-              .map(this.loadBalancerFactory::createLoadBalancer).collect(Collectors.toList()));
-   }
-
-   private void addDefaults() {
-      this.httpClientProviders.add(DefaultHttpClientProvider.class);
-      this.loadBalancers.add(SelectFirstLoadBalancer.class);
-   }
-
-   private List<Invocation> buildInvocations() {
-      Invocation[] invocations = {
-              new TimerInvocation(),
-              new ExecutionMetaInvocation(preInitializedMethodExecutionMetaProvider),
-              new RequestPrepareInvocation(pathPropertyResolver),
-              new NameResolverInvocation(authorityListenerProvider, loadBalancerInstances),
-              new RequestBodyPrepareInvocation(getConverters()),
-              new RequestFinalizeInvocation(getConverters(), httpClientProviderInstances, httpResponseCloser),
-              new LoggingInvocation()
-      };
-      return Arrays.asList(invocations);
-   }
-
-   private void startShutDownListener() {
-      Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
-   }
-
-   private void shutdown() {
-      this.httpResponseCloser.closeAll();
-   }
+    public <T> T morph(Class<T> tClass) {
+        try {
+            return (T) Proxy.newProxyInstance(tClass.getClassLoader(), new Class[]{tClass}, new ExecutionHandler(invocations, this.config));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create" + tClass.getName(), e);
+        }
+    }
 
 
-   private List<MessageConverter<?>> getConverters() {
-      List<MessageConverter<?>> converters = new ArrayList<>(getDefaultConverters());
-      converters.addAll(this.messageConverters);
-      return converters;
-   }
+    private List<Invocation> buildInvocations() {
+        Invocation[] invocations = {
+                new TimerInvocation(),
+                new LoggingInvocation(),
+                new AnnotationInvocation(this.annotationProcessor),
+                new PropertyInvocation(this.propertyResolver),
+                new ParameterInvocation(this.messageConverterUtils),
+                new NameResolverSelector(nameResolverProviders),
+                new LoadBalancerInvocation((this.loadBalancer)),
+                new RequestPrepareInvocation(),
+                new RequestExecutionInvocation(this.messageConverterUtils, this.httpClient)
+        };
+        return Arrays.asList(invocations);
+    }
 
+    private void onClose() {
+        for (Invocation eachInvocation : invocations) {
+            try {
+                eachInvocation.onClose();
+            } catch (Exception e) {
 
-   private List<MessageConverter<?>> getDefaultConverters() {
-      List<MessageConverter<?>> messageConverters = new ArrayList<>();
-      messageConverters.add(new DefaultJsonMessageConverter());
-      return messageConverters;
-   }
-
-   @Override
-   protected void finalize() throws Throwable {
-      this.shutdown();
-   }
+            }
+        }
+    }
 }
